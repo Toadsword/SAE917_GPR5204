@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.9)
 project(GPR5204)
 
-include(cmake/assembly_out.cmake)
+SET(BENCHMARK_ENABLE_GTEST_TESTS OFF CACHE STRING "Description")
 
 add_subdirectory(benchmark)
 include_directories(benchmark/include)

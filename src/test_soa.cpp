@@ -30,7 +30,7 @@ SOFTWARE.
 #include <cmath>
 
 
-#define ENTITY_NUMBERS 1'024
+#define ENTITY_NUMBERS (1'024*1'024)
 
 namespace sfge
 {
@@ -103,12 +103,6 @@ struct Vec2f
     Vec2f Lerp(const Vec2f &v1, const Vec2f &v2, float t)
     {
         return v1+(v2-v1)*t;
-    }
-    float AngleBetween(const Vec2f &v1, const Vec2f &v2)
-    {
-        float dot = Dot(v1,v2);
-        float angle = acosf(dot)/ M_PI * 180.0f;
-        return (dot < 0.0f ? -1.0f : 1.0f) * angle ;
     }
     float Dot(const Vec2f &v1, const Vec2f &v2)
     {

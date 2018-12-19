@@ -25,6 +25,7 @@ SOFTWARE.
 #include <vector>
 #include <string>
 #include <memory>
+#include <array>
 
 #include <benchmark/benchmark.h>
 
@@ -34,12 +35,12 @@ struct Element
     ElementData data;
 };
 
-const size_t ElemNmb = 10'000;
+const size_t ElemNmb = 100'000;
 
-static std::string RandomString(int maxSize)
+static std::string RandomString(const int maxSize)
 {
-    unsigned randomSize = rand()%maxSize;
-    char newKey[randomSize];
+	std::string newKey(maxSize, ' ');
+    const unsigned randomSize = rand()%maxSize;
     for(auto i = 0u; i<randomSize;i++)
     {
         if(i < randomSize-1)
@@ -142,10 +143,10 @@ static void BM_MapUpdate(benchmark::State& state)
         mapSystem->Update(data);
     }
 }
-//BENCHMARK(BM_MapUpdate);
+BENCHMARK(BM_MapUpdate);
 
 
-static void BM_VectorUpdate(benchmark::State& state) {
+static void BM_MatrixMultOptimize(benchmark::State& state) {
     auto vectorSystem = std::make_unique<VectorSystem>();
     vectorSystem->Prefill(ElemNmb);
     ElementData data;
@@ -155,6 +156,6 @@ static void BM_VectorUpdate(benchmark::State& state) {
         vectorSystem->Update(data);
     }
 }
-BENCHMARK(BM_VectorUpdate);
+BENCHMARK(BM_MatrixMultOptimize);
 
 BENCHMARK_MAIN();
