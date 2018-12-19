@@ -31,46 +31,50 @@ class Matrix
 public:
 	Matrix(int width, int height): width(width), height(height)
 	{
-		values.resize(height);
-		for (auto& row : values)
-		{
-			row.resize(width);
-		}
+		values.resize(static_cast<unsigned long>(height) * static_cast<unsigned long>(width));
+
 	}
 
 	void Prefill()
 	{
-		for(auto& row : values)
+		for (auto& v : values)
 		{
-			for (auto& v : row)
-			{
-				v = static_cast<float>(rand());
-			}
+			v = static_cast<float>(rand());
 		}
+
 	}
 
-	Matrix Transpose()
+	Matrix Transpose() const
 	{
 		Matrix m(height, width);
 		for(int i = 0; i < height; i++)
 		{
 			for(int j = 0; j < width; j++)
 			{
-				m.values[j][i] = values[i][j];
+				m.values[j*width+i] = values[i*width+j];
 			}
 		}
+		return m;
 	}
 
-	Matrix Mult(Matrix& m)
+	Matrix Mult(const Matrix& m2) const
 	{
-		if(width == m.height)
+		if(width == m2.height)
 		{
-			Matrix newMatrix(m.width, height);
-			for (int i = 0; i < height; i++)
+			Matrix newMatrix(m2.width, height);
+			for (int y = 0; y < newMatrix.height; y++)
 			{
-				for (int j = 0; j < m.width; j++)
+				for (int x = 0; x < newMatrix.width; x++)
 				{
-					newMatrix.values[i][j] = values[i][j] * m.values[j][i];
+					float newValue = 0.0f;
+
+					for(int i = 0; i < width;i++)
+					{
+						newValue += values[y*width+i] * m2.values[i*m2.width+x];
+					}
+							//
+
+					newMatrix.values[x*newMatrix.width+y] = newValue;
 				}
 			}
 			return newMatrix;
@@ -81,32 +85,47 @@ public:
 		}
 	}
 
-	Matrix MultOptimize(Matrix& m)
-	{
-		if (width == m.height)
-		{
-			Matrix newMatrix(m.width, height);
-			Matrix otherTranspose = m.Transpose();
-			for (int i = 0; i < height; i++)
-			{
-				for (int j = 0; j < m.width; j++)
-				{
-					m.values[i][j] = values[i][j] * otherTranspose.values[i][j];
-				}
-			}
-			return newMatrix;
-		}
-		else
-		{
-			return Matrix(0, 0);
-		}
-	}
+  float MultLocal(const float * const m1, const float * const m2, const int width) const
+  {
+    float result = 0.0f;
+    for(int i = 0; i < width; i++)
+  	{
+        result += m1[i]*m2[i];
+  	}
+    return result;
+  }
+
+  Matrix MultOptimize(const Matrix& m2T) const
+  {
+
+    const int localWidth = width;
+    if (localWidth == m2T.width)
+      {
+        Matrix newMatrix(m2T.width, height);
+        const int newWidth = newMatrix.width;
+        const int newHeight = newMatrix.height;
+        for (int y = 0; y < newHeight; y++)
+          {
+            for (int x = 0; x < newWidth; x++)
+              {
+                const int xOrigin = x*m2T.width;
+                const int yOrigin = y*width;
+                float newValue = MultLocal(&values[yOrigin], &m2T.values[xOrigin], localWidth);
+                newMatrix.values[x*newWidth+y] = newValue;
+              }
+          }
+        return newMatrix;
+      }
+    else
+      {
+        return Matrix(0, 0);
+      }
+  }
 
 private:
-	int width;
-	int height;
-
-	std::vector<std::vector<float>> values;
+	int width = 0;
+	int height = 0;
+	std::vector<float> values;
 };
 
 
@@ -124,7 +143,7 @@ static void BM_MatrixMult(benchmark::State& state)
 		benchmark::DoNotOptimize(m1.Mult(m2));
 	}
 }
-BENCHMARK(BM_MatrixMult)->Ranges({ {16, 16}, {128, 256} });
+BENCHMARK(BM_MatrixMult)->Args ({64,64})->Args({128,128})->Args({256,256});
 
 
 static void BM_MatrixMultOptimize(benchmark::State& state) {
@@ -136,12 +155,14 @@ static void BM_MatrixMultOptimize(benchmark::State& state) {
 		m1.Prefill();
 		Matrix m2(state.range(1), state.range(0));
 		m2.Prefill();
+
+        const Matrix m2T = m2.Transpose ();
 		state.ResumeTiming();
 
-		benchmark::DoNotOptimize(m1.Mult(m2));
+		benchmark::DoNotOptimize(m1.MultOptimize(m2T));
 	}
 }
-BENCHMARK(BM_MatrixMultOptimize)->Ranges({ {16, 16}, {128, 256} });
+BENCHMARK(BM_MatrixMultOptimize)->Args ({64,64})->Args({128,128})->Args({256,256});
 
 BENCHMARK_MAIN();
 
