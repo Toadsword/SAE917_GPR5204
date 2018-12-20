@@ -28,25 +28,17 @@ SOFTWARE.
 #include <functional>
 #include "benchmark/benchmark.h"
 
-#define MULT_LOCAL_8
 
-#ifdef MULT_LOCAL_DEF
 float MultLocal(const float * const m1, const float * const m2, const int width)
 {
   float result = 0.0f;
-  const int vectorSize = 1;
-  for(int i = 0; i < width/vectorSize; i=i+vectorSize)
-    {
-      float result1 = m1[i] * m2[i];
-      result += result1;
-    }
+  for(int i = 0; i < width; i++)
+  {
+    result += m1[i] * m2[i];
+  }
   return result;
 }
-#endif
-
-
-#ifdef MULT_LOCAL_2
-float MultLocal(const float * const m1, const float * const m2, const int width)
+float MultLocal2(const float * const m1, const float * const m2, const int width)
 {
   float result = 0.0f;
   const int vectorSize = 2;
@@ -63,11 +55,7 @@ float MultLocal(const float * const m1, const float * const m2, const int width)
     }
   return result;
 }
-#endif
-
-
-#ifdef MULT_LOCAL_4
-float MultLocal(const float * const m1, const float * const m2, const int width)
+float MultLocal4 (const float *const m1, const float *const m2, const int width)
 {
   float result = 0.0f;
   const int vectorSize = 4;
@@ -86,11 +74,7 @@ float MultLocal(const float * const m1, const float * const m2, const int width)
     }
   return result;
 }
-#endif
-
-
-#ifdef MULT_LOCAL_8
-float MultLocal(const float * const m1, const float * const m2, const int width)
+float MultLocal8(const float * const m1, const float * const m2, const int width)
 {
   float result = 0.0f;
   const int vectorSize = 8;
@@ -113,11 +97,7 @@ float MultLocal(const float * const m1, const float * const m2, const int width)
     }
   return result;
 }
-#endif
-
-
-#ifdef MULT_LOCAL_16
-float MultLocal(const float * const m1, const float * const m2, const int width)
+float MultLocal16(const float * const m1, const float * const m2, const int width)
 {
   float result = 0.0f;
   const int vectorSize = 16;
@@ -148,10 +128,7 @@ float MultLocal(const float * const m1, const float * const m2, const int width)
     }
   return result;
 }
-#endif
-
-#ifdef MULT_LOCAL_32
-float MultLocal(const float * const m1, const float * const m2, const int width)
+float MultLocal32(const float * const m1, const float * const m2, const int width)
 {
   float result = 0.0f;
   const int vectorSize = 16;
@@ -203,136 +180,120 @@ float MultLocal(const float * const m1, const float * const m2, const int width)
     }
   return result;
 }
-#endif
 
-class Matrix
+void RandomFill(float* m, const int size)
 {
-public:
-	Matrix(int width, int height): width(width), height(height)
-	{
-		values.resize(static_cast<unsigned long>(height) * static_cast<unsigned long>(width));
-
-	}
-
-	void Prefill()
-	{
-		for (auto& v : values)
-		{
-			v = static_cast<float>(rand());
-		}
-
-	}
-
-	Matrix Transpose() const
-	{
-		Matrix m(height, width);
-		for(int i = 0; i < height; i++)
-		{
-			for(int j = 0; j < width; j++)
-			{
-				m.values[j*width+i] = values[i*width+j];
-			}
-		}
-		return m;
-	}
-
-	Matrix Mult(const Matrix& m2) const
-	{
-		if(width == m2.height)
-		{
-			Matrix newMatrix(m2.width, height);
-			for (int y = 0; y < newMatrix.height; y++)
-			{
-				for (int x = 0; x < newMatrix.width; x++)
-				{
-					float newValue = 0.0f;
-
-					for(int i = 0; i < width;i++)
-					{
-						newValue += values[y*width+i] * m2.values[i*m2.width+x];
-					}
-							//
-
-					newMatrix.values[x*newMatrix.width+y] = newValue;
-				}
-			}
-			return newMatrix;
-		}
-		else
-		{
-			return Matrix(0, 0);
-		}
-	}
-
-
-  Matrix MultOptimize(const Matrix& m2T) const
+  for(int i = 0; i<size; i++)
   {
-
-    const int localWidth = width;
-    if (localWidth == m2T.width)
-      {
-        Matrix newMatrix(m2T.width, height);
-        const int newWidth = newMatrix.width;
-        const int newHeight = newMatrix.height;
-        for (int y = 0; y < newHeight; y++)
-          {
-            for (int x = 0; x < newWidth; x++)
-              {
-                const int xOrigin = x*m2T.width;
-                const int yOrigin = y*width;
-                float newValue = MultLocal(&values[yOrigin], &m2T.values[xOrigin], localWidth);
-                newMatrix.values[x*newWidth+y] = newValue;
-              }
-          }
-        return newMatrix;
-      }
-    else
-      {
-        return Matrix(0, 0);
-      }
+    m[i] = static_cast<float>(rand());
   }
-
-private:
-	int width = 0;
-	int height = 0;
-	std::vector<float> values;
-};
-
-
-static void BM_MatrixMult(benchmark::State& state)
-{
-	for (auto _ : state)
-	{
-		state.PauseTiming();
-		Matrix m1(state.range(0), state.range(1));
-		m1.Prefill();
-		Matrix m2(state.range(1), state.range(0));
-		m2.Prefill();
-		state.ResumeTiming();
-
-		benchmark::DoNotOptimize(m1.Mult(m2));
-	}
 }
-BENCHMARK(BM_MatrixMult)->Args ({64,64})->Args({128,128})->Args({256,256});
 
+static void BM_Mult(benchmark::State& state) {
+  const int size = state.range (0);
+  std::vector<float> m1;
+  m1.resize (size);
+  RandomFill (&m1[0], size);
 
-static void BM_MatrixMultOptimize(benchmark::State& state) {
-	
-	for (auto _ : state)
-	{
-		state.PauseTiming();
-		Matrix m1(state.range(0), state.range(1));
-		m1.Prefill();
-		Matrix m2(state.range(1), state.range(0));
-		m2.Prefill();
+  std::vector<float> m2;
+  m2.resize ( size);
+  RandomFill (&m2[0], size);
 
-        const Matrix m2T = m2.Transpose ();
-		state.ResumeTiming();
+  for (auto _ : state) {
 
-		benchmark::DoNotOptimize(m1.MultOptimize(m2T));
-	}
+      benchmark::DoNotOptimize(MultLocal (&m1[0],&m2[0],size));
+    }
 }
-BENCHMARK(BM_MatrixMultOptimize)->Args ({64,64})->Args({128,128})->Args({256,256});
+BENCHMARK(BM_Mult)->Range(16, 8<<25);
 
-BENCHMARK_MAIN();
+static void BM_Mult2(benchmark::State& state) {
+  const int size = state.range (0);
+  std::vector<float> m1;
+  m1.resize (size);
+  RandomFill (&m1[0], size);
 
+  std::vector<float> m2;
+  m2.resize ( size);
+  RandomFill (&m2[0], size);
+
+
+  for (auto _ : state) {
+
+      benchmark::DoNotOptimize(MultLocal2 (&m1[0],&m2[0],size));
+    }
+}
+BENCHMARK(BM_Mult2)->Range(16, 8<<25);
+
+static void BM_Mult4(benchmark::State& state) {
+  const int size = state.range (0);
+  std::vector<float> m1;
+  m1.resize (size);
+  RandomFill (&m1[0], size);
+
+  std::vector<float> m2;
+  m2.resize ( size);
+  RandomFill (&m2[0], size);
+
+
+  for (auto _ : state) {
+
+      benchmark::DoNotOptimize(MultLocal4 (&m1[0], &m2[0], size));
+    }
+}
+BENCHMARK(BM_Mult4)->Range(16, 8<<25);
+
+static void BM_Mult8(benchmark::State& state) {
+  const int size = state.range (0);
+  std::vector<float> m1;
+  m1.resize (size);
+  RandomFill (&m1[0], size);
+
+  std::vector<float> m2;
+  m2.resize ( size);
+  RandomFill (&m2[0], size);
+
+
+  for (auto _ : state) {
+
+      benchmark::DoNotOptimize(MultLocal8 (&m1[0],&m2[0],size));
+    }
+}
+BENCHMARK(BM_Mult8)->Range(16, 8<<25);
+
+static void BM_Mult16(benchmark::State& state) {
+  const int size = state.range (0);
+  std::vector<float> m1;
+  m1.resize (size);
+  RandomFill (&m1[0], size);
+
+  std::vector<float> m2;
+  m2.resize ( size);
+  RandomFill (&m2[0], size);
+
+
+  for (auto _ : state) {
+
+      benchmark::DoNotOptimize(MultLocal16 (&m1[0],&m2[0],size));
+    }
+}
+BENCHMARK(BM_Mult16)->Range(16, 8<<25);
+
+static void BM_Mult32(benchmark::State& state) {
+  const int size = state.range (0);
+  std::vector<float> m1;
+  m1.resize (size);
+  RandomFill (&m1[0], size);
+
+  std::vector<float> m2;
+  m2.resize ( size);
+  RandomFill (&m2[0], size);
+
+
+  for (auto _ : state) {
+
+      benchmark::DoNotOptimize(MultLocal32 (&m1[0],&m2[0],size));
+    }
+}
+BENCHMARK(BM_Mult32)->Range(16, 8<<25);
+
+BENCHMARK_MAIN ();
