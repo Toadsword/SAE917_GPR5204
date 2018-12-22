@@ -28,7 +28,8 @@ SOFTWARE.
 #include <functional>
 #include "benchmark/benchmark.h"
 
-#define MULT_LOCAL_8
+
+#define MULT_LOCAL_16
 
 #ifdef MULT_LOCAL_DEF
 float MultLocal(const float * const m1, const float * const m2, const int width)
@@ -205,13 +206,14 @@ float MultLocal(const float * const m1, const float * const m2, const int width)
 }
 #endif
 
+
+
 class Matrix
 {
 public:
 	Matrix(int width, int height): width(width), height(height)
 	{
 		values.resize(static_cast<unsigned long>(height) * static_cast<unsigned long>(width));
-
 	}
 
 	void Prefill()
@@ -313,7 +315,7 @@ static void BM_MatrixMult(benchmark::State& state)
 		benchmark::DoNotOptimize(m1.Mult(m2));
 	}
 }
-BENCHMARK(BM_MatrixMult)->Args ({64,64})->Args({128,128})->Args({256,256});
+BENCHMARK(BM_MatrixMult)->Args ({64,64})->Args({128,128})->Args({256,256})->Args({512,512})->Args({1024, 1024});
 
 
 static void BM_MatrixMultOptimize(benchmark::State& state) {
@@ -325,14 +327,13 @@ static void BM_MatrixMultOptimize(benchmark::State& state) {
 		m1.Prefill();
 		Matrix m2(state.range(1), state.range(0));
 		m2.Prefill();
-
-        const Matrix m2T = m2.Transpose ();
 		state.ResumeTiming();
 
+		const Matrix m2T = m2.Transpose ();
 		benchmark::DoNotOptimize(m1.MultOptimize(m2T));
 	}
 }
-BENCHMARK(BM_MatrixMultOptimize)->Args ({64,64})->Args({128,128})->Args({256,256});
+BENCHMARK(BM_MatrixMultOptimize)->Args ({64,64})->Args({128,128})->Args({256,256})->Args({512,512})->Args({1024, 1024});
 
 BENCHMARK_MAIN();
 

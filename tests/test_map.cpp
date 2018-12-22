@@ -146,7 +146,7 @@ static void BM_MapUpdate(benchmark::State& state)
 BENCHMARK(BM_MapUpdate);
 
 
-static void BM_MatrixMultOptimize(benchmark::State& state) {
+static void BM_VectorUpdate(benchmark::State& state) {
     auto vectorSystem = std::make_unique<VectorSystem>();
     vectorSystem->Prefill(ElemNmb);
     ElementData data;
@@ -156,6 +156,6 @@ static void BM_MatrixMultOptimize(benchmark::State& state) {
         vectorSystem->Update(data);
     }
 }
-BENCHMARK(BM_MatrixMultOptimize);
+BENCHMARK(BM_VectorUpdate);
 
 BENCHMARK_MAIN();
