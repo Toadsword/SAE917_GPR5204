@@ -28,6 +28,8 @@ SOFTWARE.
 #include <functional>
 #include "benchmark/benchmark.h"
 #include <dot.h>
+#include <misc.h>
+
 
 
 
