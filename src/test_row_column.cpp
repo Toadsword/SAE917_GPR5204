@@ -28,7 +28,7 @@ SOFTWARE.
 #include <functional>
 #include "benchmark/benchmark.h"
 
-#define MULT_LOCAL_8
+#define MULT_LOCAL_16
 
 #ifdef MULT_LOCAL_DEF
 float MultLocal(const float * const m1, const float * const m2, const int width)
