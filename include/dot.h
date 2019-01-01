@@ -24,6 +24,9 @@ SOFTWARE.
 
 #pragma once
 
+#include <x86intrin.h>
+#include <cstddef>
+#include <cassert>
 
 float MultLocal(const float * const m1, const float * const m2, const int width);
 float MultLocal2(const float * const m1, const float * const m2, const int width);
@@ -31,3 +34,25 @@ float MultLocal4 (const float *const m1, const float *const m2, const int width)
 float MultLocal8(const float * const m1, const float * const m2, const int width);
 float MultLocal16(const float * const m1, const float * const m2, const int width);
 float MultLocal32(const float * const m1, const float * const m2, const int width);
+
+#ifdef __SSE__
+float dot128(float *x1, float *x2, size_t len);
+#endif
+#ifdef __SSE4_2__
+float dot128dt(float *x1, float *x2, size_t len);
+#endif
+#ifdef __FMA__
+float dot128fma(float *x1, float *x2, size_t len);
+#endif
+#ifdef __AVX2__
+float dot256(float *x1, float *x2, size_t len);
+#endif
+#ifdef __FMA__
+float dot256fma(float *x1, float *x2, size_t len) ;
+#endif
+#ifdef __AVX512F__
+float dot512(float *x1, float *x2, size_t len);
+float dot512fma(float *x1, float *x2, size_t len);
+float dot512fma2(float *x1, float *x2, size_t len);
+
+#endif

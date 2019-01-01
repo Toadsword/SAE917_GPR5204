@@ -1,5 +1,7 @@
 #include <dot.h>
 
+
+
 float MultLocal(const float * const m1, const float * const m2, const int width)
 {
     float result = 0.0f;
@@ -13,7 +15,7 @@ float MultLocal2(const float * const m1, const float * const m2, const int width
 {
     float result = 0.0f;
     const int vectorSize = 2;
-    for(int i = 0; i < width/vectorSize; i=i+vectorSize)
+    for(int i = 0; i < width; i=i+vectorSize)
     {
         float result1 = m1[i] * m2[i];
         float result2 = m1[i+1] * m2[i+1];
@@ -30,7 +32,7 @@ float MultLocal4 (const float *const m1, const float *const m2, const int width)
 {
     float result = 0.0f;
     const int vectorSize = 4;
-    for(int i = 0; i < width/vectorSize; i=i+vectorSize)
+    for(int i = 0; i < width; i=i+vectorSize)
     {
         float result1 = m1[i] * m2[i];
         float result2 = m1[i+1] * m2[i+1];
@@ -49,7 +51,7 @@ float MultLocal8(const float * const m1, const float * const m2, const int width
 {
     float result = 0.0f;
     const int vectorSize = 8;
-    for(int i = 0; i < width/vectorSize; i=i+vectorSize)
+    for(int i = 0; i < width; i=i+vectorSize)
     {
         float result1 = m1[i] * m2[i];
         float result2 = m1[i+1] * m2[i+1];
@@ -72,7 +74,7 @@ float MultLocal16(const float * const m1, const float * const m2, const int widt
 {
     float result = 0.0f;
     const int vectorSize = 16;
-    for(int i = 0; i < width/vectorSize; i=i+vectorSize)
+    for(int i = 0; i < width; i=i+vectorSize)
     {
         float result1 = m1[i] * m2[i];
         float result2 = m1[i+1] * m2[i+1];
@@ -103,7 +105,7 @@ float MultLocal32(const float * const m1, const float * const m2, const int widt
 {
     float result = 0.0f;
     const int vectorSize = 16;
-    for (int i = 0; i < width / vectorSize; i = i + vectorSize)
+    for (int i = 0; i < width ; i = i + vectorSize)
     {
         float result1 = m1[i] * m2[i];
         float result2 = m1[i + 1] * m2[i + 1];
@@ -151,3 +153,157 @@ float MultLocal32(const float * const m1, const float * const m2, const int widt
     }
     return result;
 }
+
+#ifdef __SSE__
+float dot128(float *x1, float *x2, size_t len) {
+    assert(len % 4 == 0);
+    __m128 sum = _mm_setzero_ps();
+    if (len > 3) {
+        size_t limit = len - 3;
+        for (size_t i = 0; i < limit; i += 4) {
+            __m128 v1 = _mm_loadu_ps(x1 + i);
+            __m128 v2 = _mm_loadu_ps(x2 + i);
+            sum = _mm_add_ps(sum, _mm_mul_ps(v1, v2));
+            }
+        }
+    float buffer[4];
+    _mm_storeu_ps(buffer, sum);
+    return buffer[0] + buffer[1] + buffer[2] + buffer[3];
+}
+#endif
+#ifdef __SSE4_2__
+// wmu insisted
+float dot128dt(float *x1, float *x2, size_t len) {
+    assert(len % 4 == 0);
+    float sum = 0;
+    if (len > 3) {
+        size_t limit = len - 3;
+        for (size_t i = 0; i < limit; i += 4) {
+            __m128 v1 = _mm_loadu_ps(x1 + i);
+            __m128 v2 = _mm_loadu_ps(x2 + i);
+            sum += _mm_cvtss_f32(_mm_dp_ps(v1, v2, 0xf1));
+            }
+        }
+    return sum;
+}
+#endif
+
+#ifdef __FMA__
+float dot128fma(float *x1, float *x2, size_t len) {
+  assert(len % 4 == 0);
+  __m128 sum = _mm_setzero_ps();
+  if (len > 3) {
+    size_t limit = len - 3;
+    for (size_t i = 0; i < limit; i += 4) {
+      __m128 v1 = _mm_loadu_ps(x1 + i);
+      __m128 v2 = _mm_loadu_ps(x2 + i);
+      sum = _mm_fmadd_ps(v1, v2, sum);
+    }
+  }
+  float buffer[4];
+  _mm_storeu_ps(buffer, sum);
+  return buffer[0] + buffer[1] + buffer[2] + buffer[3];
+}
+
+#endif
+
+#ifdef __AVX2__
+float dot256(float *x1, float *x2, size_t len) {
+  assert(len % 8 == 0);
+  __m256 sum = _mm256_setzero_ps();
+  if (len > 7) {
+    size_t limit = len - 7;
+    for (size_t i = 0; i < limit; i += 8) {
+      __m256 v1 = _mm256_loadu_ps(x1 + i);
+      __m256 v2 = _mm256_loadu_ps(x2 + i);
+      sum = _mm256_add_ps(sum, _mm256_mul_ps(v1, v2));
+    }
+  }
+  float buffer[8];
+  _mm256_storeu_ps(buffer, sum);
+  return buffer[0] + buffer[1] + buffer[2] + buffer[3] + buffer[4] + buffer[5] +
+         buffer[6] + buffer[7];
+
+}
+#endif
+
+#ifdef __FMA__
+
+float dot256fma(float *x1, float *x2, size_t len) {
+  assert(len % 8 == 0);
+  __m256 sum = _mm256_setzero_ps();
+  if (len > 7) {
+    size_t limit = len - 7;
+    for (size_t i = 0; i < limit; i += 8) {
+      __m256 v1 = _mm256_loadu_ps(x1 + i);
+      __m256 v2 = _mm256_loadu_ps(x2 + i);
+      sum = _mm256_fmadd_ps(v1, v2, sum);
+    }
+  }
+  float buffer[8];
+  _mm256_storeu_ps(buffer, sum);
+  return buffer[0] + buffer[1] + buffer[2] + buffer[3] + buffer[4] + buffer[5] +
+         buffer[6] + buffer[7];
+}
+#endif
+
+#ifdef __AVX512F__
+
+float dot512(float *x1, float *x2, size_t len) {
+  assert(len % 16 == 0);
+  __m512 sum = _mm512_setzero_ps();
+  if (len > 15) {
+    size_t limit = len - 15;
+    for (size_t i = 0; i < limit; i += 16) {
+      __m512 v1 = _mm512_loadu_ps(x1 + i);
+      __m512 v2 = _mm512_loadu_ps(x2 + i);
+      sum = _mm512_add_ps(sum, _mm512_mul_ps(v1, v2));
+    }
+  }
+  float buffer[16];
+  _mm512_storeu_ps(buffer, sum);
+  return buffer[0] + buffer[1] + buffer[2] + buffer[3] + buffer[4] + buffer[5] +
+         buffer[6] + buffer[7] + buffer[8] + buffer[9] + buffer[10] +
+         buffer[11] + buffer[12] + buffer[13] + buffer[14] + buffer[15];
+}
+
+float dot512fma(float *x1, float *x2, size_t len) {
+  assert(len % 16 == 0);
+  __m512 sum = _mm512_setzero_ps();
+  if (len > 15) {
+    size_t limit = len - 15;
+    for (size_t i = 0; i < limit; i += 16) {
+      __m512 v1 = _mm512_loadu_ps(x1 + i);
+      __m512 v2 = _mm512_loadu_ps(x2 + i);
+      sum = _mm512_fmadd_ps(v1, v2, sum);
+    }
+  }
+  float buffer[16];
+  _mm512_storeu_ps(buffer, sum);
+  return buffer[0] + buffer[1] + buffer[2] + buffer[3] + buffer[4] + buffer[5] +
+         buffer[6] + buffer[7] + buffer[8] + buffer[9] + buffer[10] +
+         buffer[11] + buffer[12] + buffer[13] + buffer[14] + buffer[15];
+}
+float dot512fma2(float *x1, float *x2, size_t len) {
+  assert(len % 32 == 0);
+  __m512 sum = _mm512_setzero_ps();
+  if (len > 31) {
+    size_t limit = len - 31;
+    for (size_t i = 0; i < limit; i += 32) {
+
+      __m512 v11 = _mm512_loadu_ps(x1 + i);
+      __m512 v21 = _mm512_loadu_ps(x2 + i);
+      __m512 v12 = _mm512_loadu_ps(x1 + i + 16);
+      __m512 v22 = _mm512_loadu_ps(x2 + i + 16);
+      sum = _mm512_fmadd_ps(v11, v21, sum);
+      sum = _mm512_fmadd_ps(v12, v22, sum);
+    }
+  }
+  float buffer[16];
+  _mm512_storeu_ps(buffer, sum);
+  return buffer[0] + buffer[1] + buffer[2] + buffer[3] + buffer[4] + buffer[5] +
+         buffer[6] + buffer[7] + buffer[8] + buffer[9] + buffer[10] +
+         buffer[11] + buffer[12] + buffer[13] + buffer[14] + buffer[15];
+}
+
+#endif
