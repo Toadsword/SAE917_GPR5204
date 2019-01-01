@@ -256,4 +256,24 @@ static void BM_Dot256fma(benchmark::State& state) {
 BENCHMARK(BM_Dot256fma)->Range(fromRange, toRange);
 #endif
 
+#ifdef __AVX512F__
+static void BM_Dot512(benchmark::State& state) {
+	const int size = state.range(0);
+	std::vector<float> m1;
+	m1.resize(size);
+	RandomFill(&m1[0], size);
+
+	std::vector<float> m2;
+	m2.resize(size);
+	RandomFill(&m2[0], size);
+
+
+	for (auto _ : state) {
+
+		benchmark::DoNotOptimize(dot512(&m1[0], &m2[0], size));
+	}
+}
+BENCHMARK(BM_Dot512)->Range(fromRange, toRange);
+#endif
+
 BENCHMARK_MAIN ();
