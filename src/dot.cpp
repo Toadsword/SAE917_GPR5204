@@ -1,6 +1,11 @@
 #include <dot.h>
+#include <functional>
+#include <numeric>
 
-
+float MultLocalList(std::list<float>& m1, std::list<float>& m2)
+{
+  return std::inner_product(m1.begin(), m1.end(), m2.begin(),0);
+}
 
 float MultLocal(const float * const m1, const float * const m2, const int width)
 {
@@ -161,9 +166,9 @@ float dot128(float *x1, float *x2, size_t len) {
     if (len > 3) {
         size_t limit = len - 3;
         for (size_t i = 0; i < limit; i += 4) {
-            __m128 v1 = _mm_loadu_ps(x1 + i);
-            __m128 v2 = _mm_loadu_ps(x2 + i);
-            sum = _mm_add_ps(sum, _mm_mul_ps(v1, v2));
+            __m128 v1 = _mm_loadu_ps(x1 + i);//equivalent to float[4] or Vec4
+            __m128 v2 = _mm_loadu_ps(x2 + i);//equivalent to float[4] or Vec4
+            sum = _mm_add_ps(sum, _mm_mul_ps(v1, v2));//equivalent to sum = sum + v1 * v2
             }
         }
     float buffer[4];

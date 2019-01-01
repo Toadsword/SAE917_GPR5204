@@ -10,8 +10,6 @@ if(UNIX)
         message(" * C++ compiler: ${CMAKE_CXX_COMPILER_ID}")
     endif()
 endif()
-message(STATUS "The compiler is  ${CMAKE_CXX_COMPILER}")
-message(" * C++ compiler: ${CMAKE_CXX_COMPILER_ID}")
 
 SET(BENCHMARK_ENABLE_TESTING OFF CACHE STRING "Description")
 
@@ -53,7 +51,7 @@ foreach(course_file ${COURSE_FILES} )
     set_property(TARGET ${course_name} PROPERTY CXX_STANDARD 17)
 
     IF(UNIX)
-        set_target_properties(${course_name} PROPERTIES COMPILE_FLAGS "-save-temps -march=native -ffast-math")
+        set_target_properties(${course_name} PROPERTIES COMPILE_FLAGS "-save-temps -march=native")
     ENDIF(UNIX)
     set_target_properties (${course_name} PROPERTIES
         FOLDER Courses)

@@ -36,6 +36,23 @@ const int fromRange = 16;
 const int toRange = 262144;
 
 
+
+static void BM_MultList(benchmark::State& state) {
+  const int size = state.range (0);
+  std::list<float> m1;
+  std::list<float> m2;
+  for(int i = 0; i < size; i++)
+    {
+      m1.push_back (rand());
+      m2.push_back (rand());
+    }
+  for (auto _ : state) {
+
+      benchmark::DoNotOptimize(MultLocalList (m1, m2));
+    }
+}
+BENCHMARK(BM_MultList)->Range(fromRange, toRange);
+
 static void BM_Mult(benchmark::State& state) {
   const int size = state.range (0);
   std::vector<float> m1;
