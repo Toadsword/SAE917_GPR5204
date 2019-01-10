@@ -37,9 +37,12 @@ foreach(course_file ${COURSE_FILES} )
     target_link_libraries(${course_name} PUBLIC benchmark)
     set_property(TARGET ${course_name} PROPERTY CXX_STANDARD 17)
 
-    IF(UNIX)
-        set_target_properties(${course_name} PROPERTIES COMPILE_FLAGS "-save-temps -ffast-math -march=native")
-    ENDIF(UNIX)
+
+	IF(MSVC)
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:AVX2 /Oi")
+    elseif(UNIX)
+set_target_properties(${course_name} PROPERTIES COMPILE_FLAGS "-save-temps -ffast-math -march=native")
+    ENDIF(MSVC)
     set_target_properties (${course_name} PROPERTIES
         FOLDER Courses)
     IF(APPLE)
