@@ -33,7 +33,7 @@ SOFTWARE.
 
 
 const int fromRange = 16;
-const int toRange = 262144;
+const int toRange = 1<<20;
 
 
 

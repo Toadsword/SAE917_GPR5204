@@ -142,20 +142,15 @@ namespace SOA
         }
         void Translate(sfge::Vec2f moveValue)
         {
-            /*
-            for (int i = 0; i < ENTITY_NUMBERS; i++)
+
+            for (int i = 0; i < m_PositionsX.size(); i++)
             {
                 m_PositionsX[i] += moveValue.x;
+            }
+
+            for (int i = 0; i < m_PositionsY.size(); i++)
+            {
                 m_PositionsY[i] += moveValue.y;
-            }
-            */
-            for (auto& posX : m_PositionsX)
-            {
-                posX += moveValue.x;
-            }
-            for (auto& posY : m_PositionsY)
-            {
-                posY += moveValue.y;
             }
         }
         void Scale(float scaleValue)
@@ -242,7 +237,6 @@ namespace AOS
         sfge::Vec2f position;
         sfge::Vec2f scale;
         float eulerAngle;
-
     };
 
     class TransformSystem
