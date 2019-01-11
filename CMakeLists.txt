@@ -52,7 +52,7 @@ set_target_properties(${course_name} PROPERTIES COMPILE_FLAGS "-save-temps -ffas
     ENDIF()
 endforeach()
 
-SET(COURSE_GRAPHICS_DIR ${CMAKE_SOURCE_DIR}/tests_graphics)
+SET(COURSE_GRAPHICS_DIR ${CMAKE_SOURCE_DIR}/tests_cuda)
 file(GLOB COURSE_GRAPHICS_FILES ${COURSE_GRAPHICS_DIR}/*.cu )
 foreach(course_file ${COURSE_GRAPHICS_FILES} )
     # I used a simple string replace, to cut off .cpp.
