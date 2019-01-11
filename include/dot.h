@@ -37,8 +37,10 @@ SOFTWARE.
 #include <cassert>
 #include <algorithm>
 #include <list>
+#include <vector>
 
 float MultLocalList(std::list<float>& m1, std::list<float>& m2);
+float MultLocalVector(std::vector<float>& m1, std::vector<float>& m2);
 float MultLocal(const float * const m1, const float * const m2, const int width);
 float MultLocal2(const float * const m1, const float * const m2, const int width);
 float MultLocal4 (const float *const m1, const float *const m2, const int width);

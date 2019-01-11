@@ -4,7 +4,12 @@
 
 float MultLocalList(std::list<float>& m1, std::list<float>& m2)
 {
-  return std::inner_product(m1.begin(), m1.end(), m2.begin(),0);
+  return std::inner_product(m1.begin(), m1.end(), m2.begin(),0.0f);
+}
+
+float MultLocalVector(std::vector<float>& m1, std::vector<float>& m2)
+{
+	return std::inner_product(m1.begin(), m1.end(), m2.begin(), 0.0f);
 }
 
 float MultLocal(const float * const m1, const float * const m2, const int width)

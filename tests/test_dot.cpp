@@ -53,6 +53,24 @@ static void BM_MultList(benchmark::State& state) {
 }
 BENCHMARK(BM_MultList)->Range(fromRange, toRange);
 
+
+static void BM_MultAlgo(benchmark::State& state) {
+	const int size = state.range(0);
+	std::vector<float> m1;
+	m1.resize(size);
+	RandomFill(&m1[0], size);
+
+	std::vector<float> m2;
+	m2.resize(size);
+	RandomFill(&m2[0], size);
+
+	for (auto _ : state) {
+
+		benchmark::DoNotOptimize(MultLocalVector(m1, m2));
+	}
+}
+BENCHMARK(BM_MultAlgo)->Range(fromRange, toRange);
+
 static void BM_Mult(benchmark::State& state) {
   const int size = state.range (0);
   std::vector<float> m1;
