@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.9)
-project(GPR5204 LANGUAGES CXX CUDA)
+project(GPR5204)
 
 
 if(UNIX)
