@@ -51,7 +51,7 @@ static void BM_MultList(benchmark::State& state) {
       benchmark::DoNotOptimize(MultLocalList (m1, m2));
     }
 }
-BENCHMARK(BM_MultList)->Range(fromRange, toRange);
+//BENCHMARK(BM_MultList)->Range(fromRange, toRange);
 
 
 static void BM_MultAlgo(benchmark::State& state) {
@@ -104,7 +104,7 @@ static void BM_Mult2(benchmark::State& state) {
       benchmark::DoNotOptimize(MultLocal2 (&m1[0],&m2[0],size));
     }
 }
-BENCHMARK(BM_Mult2)->Range(fromRange, toRange);
+//BENCHMARK(BM_Mult2)->Range(fromRange, toRange);
 
 static void BM_Mult4(benchmark::State& state) {
   const int size = state.range (0);
@@ -122,7 +122,7 @@ static void BM_Mult4(benchmark::State& state) {
       benchmark::DoNotOptimize(MultLocal4 (&m1[0], &m2[0], size));
     }
 }
-BENCHMARK(BM_Mult4)->Range(fromRange, toRange);
+//BENCHMARK(BM_Mult4)->Range(fromRange, toRange);
 
 static void BM_Mult8(benchmark::State& state) {
   const int size = state.range (0);
@@ -140,7 +140,7 @@ static void BM_Mult8(benchmark::State& state) {
       benchmark::DoNotOptimize(MultLocal8 (&m1[0],&m2[0],size));
     }
 }
-BENCHMARK(BM_Mult8)->Range(fromRange, toRange);
+//BENCHMARK(BM_Mult8)->Range(fromRange, toRange);
 
 static void BM_Mult16(benchmark::State& state) {
   const int size = state.range (0);
@@ -158,7 +158,7 @@ static void BM_Mult16(benchmark::State& state) {
       benchmark::DoNotOptimize(MultLocal16 (&m1[0],&m2[0],size));
     }
 }
-BENCHMARK(BM_Mult16)->Range(fromRange, toRange);
+//BENCHMARK(BM_Mult16)->Range(fromRange, toRange);
 
 static void BM_Mult32(benchmark::State& state) {
   const int size = state.range (0);
@@ -176,7 +176,7 @@ static void BM_Mult32(benchmark::State& state) {
       benchmark::DoNotOptimize(MultLocal32 (&m1[0],&m2[0],size));
     }
 }
-BENCHMARK(BM_Mult32)->Range(fromRange, toRange);
+//BENCHMARK(BM_Mult32)->Range(fromRange, toRange);
 
 #ifdef __SSE__
 static void BM_Dot128(benchmark::State& state) {
