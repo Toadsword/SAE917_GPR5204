@@ -85,25 +85,27 @@ struct MyIntArray3
     }
 };
 
-void foo(const float* a, const float* b, float* out, const size_t length)
+void foo(const float* a, const float* b, float* out, const int length)
 {
-	for(size_t i = 0; i < length; i++)
+	for(int i = 0; i < length; i++)
 	{
 		out[i] = a[i] + b[i];
 	}
 }
 static void BM_Foo(benchmark::State& state) {
 
-	float* a = new float[state.range(0)];
-	float* b = new float[state.range(0)];
-	for(int i = 0; i<state.range(0);i++)
+
+	const int count = state.range(0);
+	float* a = new float[count];
+	float* b = new float[count];
+	for(int i = 0; i<count;i++)
 	{
 		a[i] = rand();
 		b[i] = rand();
 	}
-	float* out = new float[state.range(0)];
+	float* out = new float[count];
 	for (auto _ : state) {
-		foo(a, b, out, state.range(0));
+		foo(a, b, out, count);
 		benchmark::DoNotOptimize(out);
 	}
 	delete[](a);
@@ -111,30 +113,58 @@ static void BM_Foo(benchmark::State& state) {
 	delete[](out);
 }
 BENCHMARK(BM_Foo)->Range(fromRange, toRange);
-#ifdef __SSE__
-void foo_sse(const float* a, const float* b, float* out, size_t length)
-{
-		for (size_t i = 0; i < length; i += 4) {
-			__m128 v1 =  _mm_loadu_ps(a + i);//equivalent to float[4] or Vec4
-			__m128 v2 =  _mm_loadu_ps(b + i);//equivalent to float[4] or Vec4
-			__m128 sum = _mm_add_ps(v1, v2);//equivalent to sum = v1+v2
 
-			_mm_storeu_ps(out + i, sum);
-		}
+
+static void BM_FooAlias(benchmark::State& state) {
+
+  const int count = state.range(0);
+  float* a = new float[count];
+  for(int i = 0; i<count;i++)
+    {
+      a[i] = rand();
+    }
+  float* out = new float[count+2];
+  for (auto _ : state) {
+      foo(a, out+2, out, count);
+      benchmark::DoNotOptimize(out);
+    }
+  delete[](a);
+  delete[](out);
+}
+BENCHMARK(BM_FooAlias)->Range(fromRange, toRange);
+#ifdef __SSE__
+void foo_sse(const float* a, const float* b, float* out, const size_t length)
+{
+	assert(length >= 4);
+	const size_t sse_length = length - (length%4);
+
+	assert(sse_length % 4 == 0);
+      for (size_t i = 0; i < sse_length; i += 4) {
+          __m128 v1 =  _mm_loadu_ps(a + i);//equivalent to float[4] or Vec4
+          __m128 v2 =  _mm_loadu_ps(b + i);//equivalent to float[4] or Vec4
+          __m128 sum = _mm_add_ps(v1, v2);//equivalent to sum = v1+v2
+
+          _mm_storeu_ps(out + i, sum);
+      }
+      for(size_t i = sse_length; i < length;i++)
+	  {
+		out[i] = a[i] + b[i];
+	  }
 }
 
 static void BM_Foo_SSE(benchmark::State& state) {
 
-	float* a = new float[state.range(0)];
-	float* b = new float[state.range(0)];
-	for (int i = 0; i < state.range(0); i++)
+	const int count = state.range(0);
+	float* a = new float[count];
+	float* b = new float[count];
+	for (int i = 0; i < count; i++)
 	{
 		a[i] = rand();
 		b[i] = rand();
 	}
-	float* out = new float[state.range(0)];
+	float* out = new float[count];
 	for (auto _ : state) {
-		foo_sse(a, b, out, state.range(0));
+		foo_sse(a, b, out, count);
 		benchmark::DoNotOptimize(out);
 	}
 	delete[](a);
@@ -146,28 +176,37 @@ BENCHMARK(BM_Foo_SSE)->Range(fromRange, toRange);
 
 
 #ifdef __AVX2__
-void foo_avx2(const float* a, const float* b, float* out, size_t length) {
-	for (size_t i = 0; i < length; i += 8) {
+void foo_avx2(const float* a, const float* b, float* out, const size_t length) {
+
+	assert(length >= 8);
+	const size_t avx2_length = length - (length%8);
+	assert(avx2_length % 8 == 0);
+	for (size_t i = 0; i < avx2_length; i += 8) {
 		__m256 v1 = _mm256_loadu_ps(a + i);
 		__m256 v2 = _mm256_loadu_ps(b + i);
 		__m256 sum = _mm256_add_ps(v1, v2);
 		_mm256_storeu_ps(out + i, sum);
+	}
+	for(size_t i = avx2_length; i < length;i++)
+	{
+		out[i] = a[i] + b[i];
 	}
 
 }
 
 static void BM_Foo_AVX2(benchmark::State& state) {
 
-	float* a = new float[state.range(0)];
-	float* b = new float[state.range(0)];
-	for (int i = 0; i < state.range(0); i++)
+	const int count = state.range(0);
+	float* a = new float[count];
+	float* b = new float[count];
+	for (int i = 0; i < count; i++)
 	{
 		a[i] = rand();
 		b[i] = rand();
 	}
-	float* out = new float[state.range(0)];
+	float* out = new float[count];
 	for (auto _ : state) {
-		foo_avx2(a, b, out, state.range(0));
+		foo_avx2(a, b, out, count);
 		benchmark::DoNotOptimize(out);
 	}
 	delete[](a);
