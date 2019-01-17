@@ -27,9 +27,21 @@ SOFTWARE.
 */
 
 #include<cmath>
+
+#ifdef WIN32
+#include <intrin.h>
+#ifdef __AVX2__
+#define __SSE__
+#define __SSE4_2__
+#define __FMA__
+#endif
+#else
+#include <x86intrin.h>
+#endif
+
 #include "benchmark/benchmark.h"
 
-const int fromRange = 1 << 2;
+const int fromRange = 1 << 3;
 const int toRange = 1 << 20;
 
 struct MyIntArray1
@@ -52,7 +64,7 @@ struct MyIntArray2
 
     void SetToValue(int val)
     {
-      for(int i = 0; i<count; i++)
+      for(size_t i = 0; i<count; i++)
         {
           basePtr[i] = val;
         }
@@ -65,13 +77,105 @@ struct MyIntArray3
 
     void SetToValue(int val)
     {
-      int localCount = count;
-      for(int i = 0; i<localCount; i++)
+      const auto localCount = count;
+      for(size_t i = 0; i < localCount; i++)
         {
           basePtr[i] = val;
         }
     }
 };
+
+void foo(const float* a, const float* b, float* out, const size_t length)
+{
+	for(size_t i = 0; i < length; i++)
+	{
+		out[i] = a[i] + b[i];
+	}
+}
+static void BM_Foo(benchmark::State& state) {
+
+	float* a = new float[state.range(0)];
+	float* b = new float[state.range(0)];
+	for(int i = 0; i<state.range(0);i++)
+	{
+		a[i] = rand();
+		b[i] = rand();
+	}
+	float* out = new float[state.range(0)];
+	for (auto _ : state) {
+		foo(a, b, out, state.range(0));
+		benchmark::DoNotOptimize(out);
+	}
+	delete[](a);
+	delete[](b);
+	delete[](out);
+}
+BENCHMARK(BM_Foo)->Range(fromRange, toRange);
+#ifdef __SSE__
+void foo_sse(const float* a, const float* b, float* out, size_t length)
+{
+		for (size_t i = 0; i < length; i += 4) {
+			__m128 v1 =  _mm_loadu_ps(a + i);//equivalent to float[4] or Vec4
+			__m128 v2 =  _mm_loadu_ps(b + i);//equivalent to float[4] or Vec4
+			__m128 sum = _mm_add_ps(v1, v2);//equivalent to sum = v1+v2
+
+			_mm_storeu_ps(out + i, sum);
+		}
+}
+
+static void BM_Foo_SSE(benchmark::State& state) {
+
+	float* a = new float[state.range(0)];
+	float* b = new float[state.range(0)];
+	for (int i = 0; i < state.range(0); i++)
+	{
+		a[i] = rand();
+		b[i] = rand();
+	}
+	float* out = new float[state.range(0)];
+	for (auto _ : state) {
+		foo_sse(a, b, out, state.range(0));
+		benchmark::DoNotOptimize(out);
+	}
+	delete[](a);
+	delete[](b);
+	delete[](out);
+}
+BENCHMARK(BM_Foo_SSE)->Range(fromRange, toRange);
+#endif
+
+
+#ifdef __AVX2__
+void foo_avx2(const float* a, const float* b, float* out, size_t length) {
+	for (size_t i = 0; i < length; i += 8) {
+		__m256 v1 = _mm256_loadu_ps(a + i);
+		__m256 v2 = _mm256_loadu_ps(b + i);
+		__m256 sum = _mm256_add_ps(v1, v2);
+		_mm256_storeu_ps(out + i, sum);
+	}
+
+}
+
+static void BM_Foo_AVX2(benchmark::State& state) {
+
+	float* a = new float[state.range(0)];
+	float* b = new float[state.range(0)];
+	for (int i = 0; i < state.range(0); i++)
+	{
+		a[i] = rand();
+		b[i] = rand();
+	}
+	float* out = new float[state.range(0)];
+	for (auto _ : state) {
+		foo_avx2(a, b, out, state.range(0));
+		benchmark::DoNotOptimize(out);
+	}
+	delete[](a);
+	delete[](b);
+	delete[](out);
+}
+BENCHMARK(BM_Foo_AVX2)->Range(fromRange, toRange);
+#endif
 
 static void BM_Array1(benchmark::State& state) {
 
@@ -83,7 +187,6 @@ static void BM_Array1(benchmark::State& state) {
       const int newValue = rand();
       state.ResumeTiming ();
       intArray.SetToValue (newValue);
-
       benchmark::DoNotOptimize (intArray);
     }
     delete[] (intArray.basePtr);

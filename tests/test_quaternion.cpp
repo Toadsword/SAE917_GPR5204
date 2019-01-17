@@ -1,6 +1,10 @@
 //
 // Created by efarhan on 1/16/19.
 //
+#ifdef WIN32
+#define _USE_MATH_DEFINES
+#endif
+
 #include <cmath>
 #include <benchmark/benchmark.h>
 
@@ -21,19 +25,19 @@ struct Vec3f
     float z;
 };
 
-Quaternion AxisAngle(Vec3f axis, float angle)
+Quaternion AxisAngle(const Vec3f axis, const float angle)
 {
-  const float sina = sinf(angle/2.0f);
+  const float sina = sin(angle/2.0f);
   Quaternion q = {
       axis.x*sina,
       axis.y*sina,
       axis.z*sina,
-      cosf(angle/2.0f),
+      cos(angle/2.0f),
   };
   return q;
 }
 
-Quaternion AxisAngleOpti(Vec3f axis, float angle)
+Quaternion AxisAngleOpti(const Vec3f axis, const float angle)
 {
   Quaternion q = {
       0.0f,
@@ -45,25 +49,21 @@ Quaternion AxisAngleOpti(Vec3f axis, float angle)
 }
 
 static void BM_AxisAngle(benchmark::State& state) {
-  Vec3f axis {0.0f,0.0f,1.0f};
+	const Vec3f axis {0.0f,0.0f,1.0f};
 
   for (auto _ : state) {
-      state.PauseTiming ();
-      float angle = (float)((rand()%90)-45)/360.0f*2.0f*M_PI;
-      state.ResumeTiming ();
-      auto result = (AxisAngle (axis, angle));
+	  float angle = static_cast<float>((rand() % 90) - 45)/360.0f*2.0f*M_PI;
+      auto result = AxisAngle (axis, angle);
       benchmark::DoNotOptimize (result);
     }
 
 }
 BENCHMARK(BM_AxisAngle);
 static void BM_AxisAngleOpti(benchmark::State& state) {
-  Vec3f axis {0.0f,0.0f,1.0f};
+	const Vec3f axis {0.0f,0.0f,1.0f};
 
   for (auto _ : state) {
-      state.PauseTiming ();
-      float angle = (float)((rand()%90)-45)/360.0f*2.0f*M_PI;
-      state.ResumeTiming ();
+	  float angle = static_cast<float>((rand() % 90) - 45)/360.0f*2.0f*M_PI;
       auto result = AxisAngleOpti (axis, angle);
       benchmark::DoNotOptimize (result);
     }
