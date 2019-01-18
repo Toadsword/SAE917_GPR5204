@@ -73,12 +73,12 @@ struct MyIntArray2
 struct MyIntArray3
 {
     int* basePtr;
-    size_t count;
+    int count;
 
     void SetToValue(int val)
     {
       const auto localCount = count;
-      for(size_t i = 0; i < localCount; i++)
+      for(int i = 0; i < localCount; i++)
         {
           basePtr[i] = val;
         }
@@ -118,18 +118,17 @@ BENCHMARK(BM_Foo)->Range(fromRange, toRange);
 static void BM_FooAlias(benchmark::State& state) {
 
   const int count = state.range(0);
-  float* a = new float[count];
+  float* a = new float[count+2];
   for(int i = 0; i<count;i++)
     {
       a[i] = rand();
     }
-  float* out = new float[count+2];
-  for (auto _ : state) {
-      foo(a, out+2, out, count);
-      benchmark::DoNotOptimize(out);
+  for (auto _ : state)
+    {
+      foo (a, a + 1, a + 1, count);
+      benchmark::DoNotOptimize (a);
     }
   delete[](a);
-  delete[](out);
 }
 BENCHMARK(BM_FooAlias)->Range(fromRange, toRange);
 #ifdef __SSE__
